@@ -48,15 +48,30 @@ def ad_estoque(produto_id, quantidade, usuario):
     )
     print(f"{quantidade} unidades do produto {produto_id} foram adicionadas ao estoque!")
 
+def excluir_produto(produto_id, usuario):
+    if usuario["tipo_usuario"] != "admin":
+        print("Permissão negada: apenas administradores podem excluir produtos.")
+        return
+
+    produto = produtos_collection.find_one({"_id": produto_id})
+    if not produto:
+        print("Produto não encontrado.")
+        return
+
+    produtos_collection.delete_one({"_id": produto_id})
+
+    estoque_collection.delete_one({"produto_id": produto_id})
+    print(f"Produto {produto_id} excluído com sucesso e removido do estoque!")
+
 def registro_compras(usuario_id, lista_produtos, usuario):
     if usuario["tipo_usuario"] != "cliente":
         print("Permissão negada: apenas clientes podem realizar compras.")
         return
-    
+
     total = 0
     for produto in lista_produtos:
         total += produto['quantidade'] * produto['preco_unitario']
-    
+
     compra = {
         "usuario_id": usuario_id,
         "total": total,
@@ -95,3 +110,13 @@ def relatorio_compras(usuario):
     compras = compras_collection.find()
     for compra in compras:
         print(f"Compra ID: {compra['_id']}, Usuário ID: {compra['usuario_id']}, Total: R${compra['total']:.2f}")
+
+def buscar_usuario_por_email(email):
+    usuario = usuarios_collection.find_one({"email": email})
+    if usuario:
+        print(f"Usuário encontrado: {usuario['nome']}, Email: {usuario['email']}, Tipo: {usuario['tipo_usuario']}")
+        return usuario
+    else:
+        print("Usuário não encontrado.")
+        return None
+    
